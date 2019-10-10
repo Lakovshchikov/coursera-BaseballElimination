@@ -25,6 +25,10 @@ public class BaseballElimination {
             this.index = index;
         }
 
+        private Team(){
+
+        }
+
         public void setVertex(int vertex) {
             this.vertex = vertex;
         }
@@ -33,6 +37,7 @@ public class BaseballElimination {
     private ST<String, Team> teams;
     private int t;
     private FordFulkerson FF;
+    private Queue<String> ifTrivial;
 
     public BaseballElimination(String filename) {
         In in = new In(filename);
@@ -85,6 +90,9 @@ public class BaseballElimination {
     }
 
     public boolean isEliminated(String team) {
+        if (testTrivial(team)) {
+            return true;
+        }
         checkInput(team);
         FlowNetwork FN = createNetwork(team);
         FF = new FordFulkerson(FN, 0, t);
@@ -100,7 +108,11 @@ public class BaseballElimination {
 
     public Iterable<String> certificateOfElimination(String team) {
         checkInput(team);
+        ifTrivial = new Queue<>();
         if (isEliminated(team)) {
+            if (ifTrivial.size() != 0) {
+                return ifTrivial;
+            }
             Queue<String> res = new Queue<String>();
             Queue<Integer> q = new Queue<Integer>();
             for (int i = 0; i < t; i++) {
@@ -109,9 +121,11 @@ public class BaseballElimination {
                 }
             }
             for (Integer i : q) {
-                String name = findNameByVertex(i);
-                if ( name != null) {
-                    res.enqueue(name);
+                if (i!=0) {
+                    String name = findNameByVertex(i);
+                    if ( name != null) {
+                        res.enqueue(name);
+                    }
                 }
             }
             return res;
@@ -195,22 +209,26 @@ public class BaseballElimination {
         return null;
     }
 
-//    private boolean testTrivial (String team) {
-//        int maxWins = 0;
-//        int current = 0;
-//        for (String t : teams) {
-//            current = teams.get(t).won;
-//            if (maxWins < current){
-//                maxWins = current;
-//            }
-//        }
-//        Team t = teams.get(team);
-//        if (t.won + t.lost < maxWins) {
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
+    private boolean testTrivial (String team) {
+        int current = 0;
+        ifTrivial = new Queue<>();
+        Team t = teams.get(team);
+        Team teamMax = new Team();
+        int maxWins = t.won + t.lost;
+
+        for (String name : teams) {
+            current = teams.get(name).won;
+            if (maxWins < current){
+                ifTrivial.enqueue(teams.get(name).name);
+            }
+        }
+
+        if (ifTrivial.size() != 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     private void checkInput (String team) {
         if (team == null || teams.get(team) == null)
@@ -225,17 +243,7 @@ public class BaseballElimination {
     public static void main(String[] args) {
         String filename = args[0];
         BaseballElimination BE = new BaseballElimination(filename);
-//        String st1 = "Atlanta";
-        String st2 = "Philadelphia";
-        int res = 0;
-//        res = BE.wins(st1);
-//        res = BE.wins(st2);
-//        res = BE.losses(st1);
-//        res = BE.losses(st2);
-//        res = BE.remaining(st1);
-//        res = BE.remaining(st2);
-//        res = BE.against(st1, st2);
-        boolean b = BE.isEliminated(st2);
+        String st2 = "Detroit";
         Iterable a = BE.certificateOfElimination(st2);
         int c = 0;
     }
